@@ -280,7 +280,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: src })
       })
-      .then(r => r.json())
+      .then(async r => {
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Status ${r.status}: ${text}`);
+        }
+        return r.json();
+      })
       .then(res => {
         if (res.stderr) consoleOut.textContent += res.stderr;
         if (res.stdout) treeOut.textContent += res.stdout;

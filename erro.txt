@@ -1,0 +1,9 @@
+int main(int argc, char **argv)
+
+ajuste este codigo deveria funcionar 
+ERROR: Aborted('callMain' was not exported. add it to EXPORTED_RUNTIME_METHODS (see the Emscripten FAQ))
+
+intercepte o stdio e stderr
+
+tente interceptar a mensagem do termina pelo js
+que é por onde vai sair as mensagens do terminal

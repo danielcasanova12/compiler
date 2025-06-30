@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Compiler Interface</title>
+  <style>
+    body { margin:0; font-family:sans-serif; display:flex; flex-direction:column; height:100vh; }
+    .input-section { padding:10px; background:#fff; border-bottom:1px solid #ccc; }
+    .code-editor-container { display:flex; border:1px solid #3e4451; background:#282c34; height:200px; }
+    #line-numbers { width:40px; padding:10px 5px; text-align:right; background:#21252b; color:#636d83; font:14px monospace; white-space:pre-wrap; user-select:none; }
+    #code-input { flex:1; border:none; outline:none; background:#282c34; color:#abb2bf; padding:10px; font:14px monospace; white-space:pre; overflow:auto; }
+    .main-container { display:flex; flex:1; overflow:hidden; }
+    .section { flex:1; margin:5px; display:flex; flex-direction:column; background:#fff; border:1px solid #ccc; }
+    .section h3 { margin:0; padding:5px; border-bottom:1px solid #eee; font-size:16px; }
+    .content-area { flex:1; padding:10px; font:14px monospace; background:#1e1e1e; color:#00ff00; overflow:auto; white-space:pre-wrap; }
+    #code-display-content { background:#282c34; color:#abb2bf; }
+    button { margin-top:5px; }
+  </style>
+</head>
+<body>
+
+  <div class="input-section">
+    <h3>Seu Código C</h3>
+    <div class="code-editor-container">
+      <div id="line-numbers"></div>
+      <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
+    </div>
+    <button id="btn-show">Exibir Código</button>
+    <button id="btn-run">Executar Código C</button>
+  </div>
+
+  <div class="main-container">
+    <div class="section">
+      <h3>Console (stdout / stderr)</h3>
+      <pre id="console-output" class="content-area"></pre>
+    </div>
+    <div class="section">
+      <h3>Código Fonte</h3>
+      <pre id="code-display-content" class="content-area"><code class="language-c"></code></pre>
+    </div>
+  </div>
+
+  <!-- 1) Defina o Module ANTES do opus.js -->
+  <script>
+    window.Module = {
+      noInitialRun: true,
+      noExitRuntime: true,
+      inputBuffer: [],
+      print(text) {
+        document.getElementById('console-output').textContent += text + '\n';
+      },
+      printErr(text) {
+        document.getElementById('console-output').textContent += text + '\n';
+      },
+      onRuntimeInitialized() {
+        console.log('✅ WASM pronto');
+      }
+    };
+  </script>
+
+  <!-- 2) Carregue o bundle Emscripten (opus.js com wasm embutido) -->
+  <script src="opus.js"></script>
+
+  <!-- 3) UI e Execução -->
+  <script>
+    const codeInput   = document.getElementById('code-input');
+    const codeDisplay = document.querySelector('#code-display-content code');
+    const lineNumbers = document.getElementById('line-numbers');
+    const btnShow     = document.getElementById('btn-show');
+    const btnRun      = document.getElementById('btn-run');
+    const consoleOut  = document.getElementById('console-output');
+
+    // atualiza contador de linhas
+    function updateLineNumbers() {
+      const n = codeInput.value.split('\n').length;
+      lineNumbers.textContent = Array.from({length:n}, (_,i)=>i+1).join('\n');
+    }
+    codeInput.addEventListener('input', updateLineNumbers);
+    codeInput.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = codeInput.scrollTop;
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      updateLineNumbers();
+      displayCodeAndHighlight();
+    });
+
+    // exibe e realça o código
+    function displayCodeAndHighlight() {
+      codeDisplay.textContent = codeInput.value;
+      delete codeDisplay.dataset.highlighted;
+      if(window.hljs) hljs.highlightElement(codeDisplay);
+    }
+    btnShow.addEventListener('click', displayCodeAndHighlight);
+
+    // *REINICIALIZA* o FS a cada execução e depois chama main()
+    function runCProgram() {
+      consoleOut.textContent = '';                    // limpa console
+      const src = codeInput.value + '\n';            // código + newline
+      Module.inputBuffer = [...src].map(c=>c.charCodeAt(0));
+
+      // reinicializa FS para stdin/stdout/stderr
+      FS.init(
+        () => Module.inputBuffer.length ? Module.inputBuffer.shift() : null,
+        c => Module.print(String.fromCharCode(c)),
+        c => Module.printErr(String.fromCharCode(c))
+      );
+
+      // chama main()
+      try {
+        if (typeof Module.callMain === 'function') {
+          Module.callMain([]);
+        } else {
+          Module.ccall('main','number',[],[]);
+        }
+      } catch(e) {
+        if (e.name !== 'ExitStatus') {
+          Module.printErr('[Erro] ' + e.message);
+        }
+      }
+    }
+    btnRun.addEventListener('click', runCProgram);
+  </script>
+
+  <!-- highlight.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+</body>
+</html>

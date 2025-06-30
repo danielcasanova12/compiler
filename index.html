@@ -231,6 +231,7 @@
     const treeOut      = document.getElementById('tree-output');
     const notification = document.getElementById('notification');
     const highlighted  = document.getElementById('highlighted-code');
+    const RUN_ENDPOINT = '/api/run';
 
     function updateLineNumbers() {
       const count = codeInput.value.split('\n').length;
@@ -274,7 +275,7 @@
     });
 
     function sendCode(src) {
-      fetch('/run', {
+      fetch('/RUN_ENDPOINT', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: src })

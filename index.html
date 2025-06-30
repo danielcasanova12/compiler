@@ -1,97 +1,249 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Compiler Interface</title>
   <style>
-    body { margin:0; font-family:sans-serif; display:flex; flex-direction:column; height:100vh; }
-    .input-section { padding:10px; background:#fff; border-bottom:1px solid #ccc; }
-    .code-editor-container { display:flex; border:1px solid #3e4451; background:#282c34; height:200px; }
-    #line-numbers { width:40px; padding:10px 5px; text-align:right; background:#21252b; color:#636d83; font:14px monospace; white-space:pre-wrap; user-select:none; }
-    #code-input { flex:1; border:none; outline:none; background:#282c34; color:#abb2bf; padding:10px; font:14px monospace; white-space:pre; overflow:auto; }
-    .main-container { display:flex; flex:1; overflow:hidden; }
-    .section { flex:1; margin:5px; display:flex; flex-direction:column; background:#fff; border:1px solid #ccc; }
-    .section h3 { margin:0; padding:5px; border-bottom:1px solid #eee; font-size:16px; }
-    .content-area { flex:1; padding:10px; font:14px monospace; background:#1e1e1e; color:#00ff00; overflow:auto; white-space:pre-wrap; }
-    #code-display-content { background:#282c34; color:#abb2bf; }
-    button { margin-top:5px; }
+    /* reset básico */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .input-section {
+      position: relative;      /* para posicionar a notificação */
+      background: white;
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .input-section h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+
+    /* notificação */
+    .notification {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .notification.show {
+      opacity: 1;
+    }
+    .notification .icon {
+      margin-right: 0.5rem;
+      font-weight: bold;
+    }
+
+    /* editor de código */
+    .code-editor-container {
+      display: flex;
+      border: 1px solid #3e4451;
+      background: #282c34;
+      height: 200px;
+    }
+    #line-numbers {
+      width: 40px;
+      padding: 10px 5px;
+      text-align: right;
+      background: #21252b;
+      color: #636d83;
+      font: 14px monospace;
+      line-height: 20px;
+      overflow-y: auto;
+      white-space: pre;
+      user-select: none;
+    }
+    #code-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: #282c34;
+      color: #abb2bf;
+      padding: 10px;
+      font: 14px monospace;
+      line-height: 20px;
+      white-space: pre;
+      overflow: auto;
+      resize: none;
+    }
+
+    /* controls */
+    .controls {
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+
+    .file-upload {
+      position: relative;
+      overflow: hidden;
+    }
+    .file-upload input[type="file"] {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-name {
+      font-size: 0.9rem;
+      color: #555;
+      font-style: italic;
+    }
+
+    /* saída */
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .section {
+      flex: 1;
+      margin: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    .section h3 {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 1rem;
+      color: #444;
+    }
+    .content-area {
+      flex: 1;
+      padding: 0.75rem;
+      font: 14px monospace;
+      background: #1e1e1e;
+      color: #00ff00;
+      overflow: auto;
+      white-space: pre-wrap;
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
   </style>
 </head>
 <body>
 
   <div class="input-section">
     <h3>Seu Código Opus</h3>
+    <div class="notification" id="notification">
+      <span class="icon">✔</span>
+      <span id="notification-text">Código carregado com sucesso!</span>
+    </div>
+
     <div class="code-editor-container">
       <div id="line-numbers"></div>
       <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
     </div>
-    <input type="file" id="file-input" accept=".txt,.opus" />
-    <button id="btn-show">Exibir Código</button>
-    <button id="btn-run">Executar Código</button>
+
+    <div class="controls">
+      <div class="file-upload btn">
+        Selecionar Arquivo
+        <input type="file" id="file-input" accept=".txt,.opus" />
+      </div>
+      <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
+      <button id="btn-run" class="btn">Executar Código</button>
+    </div>
   </div>
 
   <div class="main-container">
     <div class="section">
-      <h3>Console (stdout / stderr)</h3>
+      <h3>Console (stderr)</h3>
       <pre id="console-output" class="content-area"></pre>
     </div>
     <div class="section">
-      <h3>Árvore</h3>
+      <h3>Árvore (stdout)</h3>
       <pre id="tree-output" class="content-area"></pre>
-    </div>
-    <div class="section">
-      <h3>Código Fonte</h3>
-      <pre id="code-display-content" class="content-area"><code class="language-c"></code></pre>
     </div>
   </div>
 
-  <!-- Carregue o bundle Emscripten no servidor -->
-
-  <!-- 3) UI e Execução -->
   <script>
-    const codeInput   = document.getElementById('code-input');
-    const codeDisplay = document.querySelector('#code-display-content code');
-    const lineNumbers = document.getElementById('line-numbers');
-    const fileInput   = document.getElementById('file-input');
-    const btnShow     = document.getElementById('btn-show');
-    const btnRun      = document.getElementById('btn-run');
-    const consoleOut  = document.getElementById('console-output');
-    const treeOut     = document.getElementById('tree-output');
+    const codeInput    = document.getElementById('code-input');
+    const lineNumbers  = document.getElementById('line-numbers');
+    const fileInput    = document.getElementById('file-input');
+    const fileNameEl   = document.getElementById('file-name');
+    const btnRun       = document.getElementById('btn-run');
+    const consoleOut   = document.getElementById('console-output');
+    const treeOut      = document.getElementById('tree-output');
+    const notification = document.getElementById('notification');
 
-    // atualiza contador de linhas
     function updateLineNumbers() {
-      const n = codeInput.value.split('\n').length;
-      lineNumbers.textContent = Array.from({length:n}, (_,i)=>i+1).join('\n');
+      const count = codeInput.value.split('\n').length;
+      lineNumbers.textContent = Array.from({length: count}, (_, i) => i + 1).join('\n');
     }
+
+    function showNotification(text) {
+      document.getElementById('notification-text').textContent = text;
+      notification.classList.add('show');
+      clearTimeout(notification._timeout);
+      notification._timeout = setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
     codeInput.addEventListener('input', updateLineNumbers);
     codeInput.addEventListener('scroll', () => {
       lineNumbers.scrollTop = codeInput.scrollTop;
     });
+    document.addEventListener('DOMContentLoaded', updateLineNumbers);
+
     fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      if (file) {
+      if (fileInput.files.length) {
+        const file = fileInput.files[0];
+        fileNameEl.textContent = file.name;
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
           codeInput.value = e.target.result;
           updateLineNumbers();
-          displayCodeAndHighlight();
+          showNotification('Código carregado com sucesso!');
         };
         reader.readAsText(file);
+      } else {
+        fileNameEl.textContent = 'Nenhum arquivo selecionado';
       }
     });
-    document.addEventListener('DOMContentLoaded', () => {
-      updateLineNumbers();
-      displayCodeAndHighlight();
-    });
-
-    // exibe e realça o código
-    function displayCodeAndHighlight() {
-      codeDisplay.textContent = codeInput.value;
-      delete codeDisplay.dataset.highlighted;
-      if(window.hljs) hljs.highlightElement(codeDisplay);
-    }
-    btnShow.addEventListener('click', displayCodeAndHighlight);
 
     function sendCode(src) {
       fetch('/run', {
@@ -100,16 +252,10 @@
         body: JSON.stringify({ code: src })
       })
       .then(r => r.json())
-    .then(res => {
-    // só stderr vai pro console
-    if (res.stderr) {
-        consoleOut.textContent += res.stderr;
-    }
-    // só stdout vai pra árvore
-    if (res.stdout) {
-        treeOut.textContent += res.stdout;
-    }
-    })
+      .then(res => {
+        if (res.stderr) consoleOut.textContent += res.stderr;
+        if (res.stdout) treeOut.textContent += res.stdout;
+      })
       .catch(err => {
         consoleOut.textContent += '[Erro] ' + err.message + '\n';
       });
@@ -117,24 +263,18 @@
 
     function runCProgram() {
       consoleOut.textContent = '';
-      treeOut.textContent = '';
-      const file = fileInput.files[0];
-      if (file) {
+      treeOut.textContent   = '';
+      if (fileInput.files.length) {
         const reader = new FileReader();
-        reader.onload = () => {
-          sendCode(reader.result + '\n');
-        };
-        reader.readAsText(file);
+        reader.onload = () => sendCode(reader.result + '\n');
+        reader.readAsText(fileInput.files[0]);
       } else {
-        const src = codeInput.value + '\n';
-        sendCode(src);
+        sendCode(codeInput.value + '\n');
       }
     }
+
     btnRun.addEventListener('click', runCProgram);
   </script>
 
-  <!-- highlight.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
 </body>
 </html>

@@ -36,31 +36,16 @@
       <pre id="console-output" class="content-area"></pre>
     </div>
     <div class="section">
+      <h3>Árvore</h3>
+      <pre id="tree-output" class="content-area"></pre>
+    </div>
+    <div class="section">
       <h3>Código Fonte</h3>
       <pre id="code-display-content" class="content-area"><code class="language-c"></code></pre>
     </div>
   </div>
 
-  <!-- 1) Defina o Module ANTES do opus.js -->
-  <script>
-    window.Module = {
-      noInitialRun: true,
-      noExitRuntime: true,
-      inputBuffer: [],
-      print(text) {
-        document.getElementById('console-output').textContent += text + '\n';
-      },
-      printErr(text) {
-        document.getElementById('console-output').textContent += text + '\n';
-      },
-      onRuntimeInitialized() {
-        console.log('✅ WASM pronto');
-      }
-    };
-  </script>
-
-  <!-- 2) Carregue o bundle Emscripten (opus.js com wasm embutido) -->
-  <script src="opus.js"></script>
+  <!-- Carregue o bundle Emscripten no servidor -->
 
   <!-- 3) UI e Execução -->
   <script>
@@ -70,6 +55,7 @@
     const btnShow     = document.getElementById('btn-show');
     const btnRun      = document.getElementById('btn-run');
     const consoleOut  = document.getElementById('console-output');
+    const treeOut     = document.getElementById('tree-output');
 
     // atualiza contador de linhas
     function updateLineNumbers() {
@@ -93,31 +79,28 @@
     }
     btnShow.addEventListener('click', displayCodeAndHighlight);
 
-    // *REINICIALIZA* o FS a cada execução e depois chama main()
     function runCProgram() {
-      consoleOut.textContent = '';                    // limpa console
-      const src = codeInput.value + '\n';            // código + newline
-      Module.inputBuffer = [...src].map(c=>c.charCodeAt(0));
-
-      // reinicializa FS para stdin/stdout/stderr
-      FS.init(
-        () => Module.inputBuffer.length ? Module.inputBuffer.shift() : null,
-        c => Module.print(String.fromCharCode(c)),
-        c => Module.printErr(String.fromCharCode(c))
-      );
-
-      // chama main()
-      try {
-        if (typeof Module.callMain === 'function') {
-          Module.callMain([]);
-        } else {
-          Module.ccall('main','number',[],[]);
+      consoleOut.textContent = '';
+      treeOut.textContent = '';
+      const src = codeInput.value + '\n';
+      fetch('/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: src })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.stdout) {
+          consoleOut.textContent += res.stdout;
+          treeOut.textContent += res.stdout;
         }
-      } catch(e) {
-        if (e.name !== 'ExitStatus') {
-          Module.printErr('[Erro] ' + e.message);
+        if (res.stderr) {
+          consoleOut.textContent += res.stderr;
         }
-      }
+      })
+      .catch(err => {
+        consoleOut.textContent += '[Erro] ' + err.message + '\n';
+      });
     }
     btnRun.addEventListener('click', runCProgram);
   </script>

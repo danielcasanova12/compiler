@@ -1,7 +1,8 @@
 // server.js
 const http = require('http');
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const PORT = 3000;
 const MIME_TYPES = {
@@ -42,7 +43,48 @@ function serveFile(filePath, res) {
   });
 }
 
+function runCode(code, callback) {
+  const child = spawn('node', [path.join(__dirname, 'opus.js')]);
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', data => {
+    stdout += data.toString();
+  });
+  child.stderr.on('data', data => {
+    stderr += data.toString();
+  });
+  child.on('error', err => {
+    stderr += err.message;
+  });
+  child.on('close', () => {
+    callback({ stdout, stderr });
+  });
+  if (code) {
+    child.stdin.write(code);
+  }
+  child.stdin.end();
+}
+
 http.createServer((req, res) => {
+  if (req.method === 'POST' && req.url === '/run') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      let data;
+      try {
+        data = JSON.parse(body);
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        return res.end('Invalid JSON');
+      }
+      runCode(data.code || '', result => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      });
+    });
+    return;
+  }
+
   // Normaliza e previne acesso fora da pasta
   let safePath = path.normalize(decodeURI(req.url)).replace(/^(\.\.[\/\\])+/, '');
   if (safePath === '/' || safePath === '') safePath = '/';

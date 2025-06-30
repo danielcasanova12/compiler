@@ -21,13 +21,14 @@
 <body>
 
   <div class="input-section">
-    <h3>Seu Código C</h3>
+    <h3>Seu Código Opus</h3>
     <div class="code-editor-container">
       <div id="line-numbers"></div>
       <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
     </div>
+    <input type="file" id="file-input" accept=".txt,.opus" />
     <button id="btn-show">Exibir Código</button>
-    <button id="btn-run">Executar Código C</button>
+    <button id="btn-run">Executar Código</button>
   </div>
 
   <div class="main-container">
@@ -52,6 +53,7 @@
     const codeInput   = document.getElementById('code-input');
     const codeDisplay = document.querySelector('#code-display-content code');
     const lineNumbers = document.getElementById('line-numbers');
+    const fileInput   = document.getElementById('file-input');
     const btnShow     = document.getElementById('btn-show');
     const btnRun      = document.getElementById('btn-run');
     const consoleOut  = document.getElementById('console-output');
@@ -66,6 +68,18 @@
     codeInput.addEventListener('scroll', () => {
       lineNumbers.scrollTop = codeInput.scrollTop;
     });
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          codeInput.value = e.target.result;
+          updateLineNumbers();
+          displayCodeAndHighlight();
+        };
+        reader.readAsText(file);
+      }
+    });
     document.addEventListener('DOMContentLoaded', () => {
       updateLineNumbers();
       displayCodeAndHighlight();
@@ -79,28 +93,42 @@
     }
     btnShow.addEventListener('click', displayCodeAndHighlight);
 
-    function runCProgram() {
-      consoleOut.textContent = '';
-      treeOut.textContent = '';
-      const src = codeInput.value + '\n';
+    function sendCode(src) {
       fetch('/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: src })
       })
       .then(r => r.json())
-      .then(res => {
-        if (res.stdout) {
-          consoleOut.textContent += res.stdout;
-          treeOut.textContent += res.stdout;
-        }
-        if (res.stderr) {
-          consoleOut.textContent += res.stderr;
-        }
-      })
+    .then(res => {
+    // só stderr vai pro console
+    if (res.stderr) {
+        consoleOut.textContent += res.stderr;
+    }
+    // só stdout vai pra árvore
+    if (res.stdout) {
+        treeOut.textContent += res.stdout;
+    }
+    })
       .catch(err => {
         consoleOut.textContent += '[Erro] ' + err.message + '\n';
       });
+    }
+
+    function runCProgram() {
+      consoleOut.textContent = '';
+      treeOut.textContent = '';
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          sendCode(reader.result + '\n');
+        };
+        reader.readAsText(file);
+      } else {
+        const src = codeInput.value + '\n';
+        sendCode(src);
+      }
     }
     btnRun.addEventListener('click', runCProgram);
   </script>

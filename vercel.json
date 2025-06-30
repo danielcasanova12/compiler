@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/run.js": {
+      "includeFiles": "opus.js"
+    }
+  }
+}

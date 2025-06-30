@@ -12,7 +12,8 @@ module.exports = function handler(req, res) {
   let stderr = '';
 
   // executa o seu parser/opus
-  const child = spawn('node', [path.join(process.cwd(), 'opus.js')]);
+  const opusPath = path.join(__dirname, 'opus.js');
+  const child = spawn('node', [opusPath]);
 
   child.stdout.on('data', data => { stdout += data.toString(); });
   child.stderr.on('data', data => { stderr += data.toString(); });

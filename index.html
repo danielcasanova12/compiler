@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Compiler Interface</title>
+  <title>Compiler Interface com Highlight</title>
+
+  <!-- Prism.css para tema escuro -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+
   <style>
-    /* reset básico */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -17,11 +20,16 @@
       height: 100vh;
     }
 
+    /* --- EDIÇÃO + PREVIEW --- */
     .input-section {
-      position: relative;      /* para posicionar a notificação */
+      position: relative;
       background: white;
       padding: 1rem;
       border-bottom: 1px solid #e0e0e0;
+
+      /* ↙ limita e torna rolável ↘ */
+      max-height: 45vh;
+      overflow-y: auto;
     }
     .input-section h3 {
       font-size: 1.2rem;
@@ -29,15 +37,11 @@
       color: #444;
     }
 
-    /* notificação */
     .notification {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      display: flex;
-      align-items: center;
-      background: #d4edda;
-      color: #155724;
+      top: 1rem; right: 1rem;
+      display: flex; align-items: center;
+      background: #d4edda; color: #155724;
       border: 1px solid #c3e6cb;
       padding: 0.5rem 0.75rem;
       border-radius: 4px;
@@ -47,15 +51,9 @@
       transition: opacity 0.3s ease;
       pointer-events: none;
     }
-    .notification.show {
-      opacity: 1;
-    }
-    .notification .icon {
-      margin-right: 0.5rem;
-      font-weight: bold;
-    }
+    .notification.show { opacity: 1; }
+    .notification .icon { margin-right: 0.5rem; font-weight: bold; }
 
-    /* editor de código */
     .code-editor-container {
       display: flex;
       border: 1px solid #3e4451;
@@ -76,24 +74,17 @@
     }
     #code-input {
       flex: 1;
-      border: none;
-      outline: none;
-      background: #282c34;
-      color: #abb2bf;
-      padding: 10px;
-      font: 14px monospace;
+      border: none; outline: none;
+      background: #282c34; color: #abb2bf;
+      padding: 10px; font: 14px monospace;
       line-height: 20px;
       white-space: pre;
-      overflow: auto;
-      resize: none;
+      overflow: auto; resize: none;
     }
 
-    /* controls */
     .controls {
       margin-top: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+      display: flex; align-items: center; gap: 0.75rem;
     }
     .btn {
       display: inline-flex;
@@ -108,9 +99,7 @@
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .btn:hover {
-      background: #0056b3;
-    }
+    .btn:hover { background: #0056b3; }
 
     .file-upload {
       position: relative;
@@ -123,17 +112,31 @@
       opacity: 0;
       cursor: pointer;
     }
-
     .file-name {
       font-size: 0.9rem;
       color: #555;
       font-style: italic;
     }
 
-    /* saída */
+    .preview {
+      margin-top: 1rem;
+    }
+    .preview h4 {
+      margin-bottom: 0.5rem;
+      color: #444;
+    }
+    .preview pre {
+      border-radius: 4px;
+      overflow: auto;
+      padding: 1rem;
+      background: #282c34;
+    }
+
+    /* --- SAÍDA (CONSOLE + ÁRVORE) --- */
     .main-container {
+      flex: 1;                   /* ocupa resto da tela */
       display: flex;
-      flex: 1;
+      min-height: 0;             /* permite encolher */
       overflow: hidden;
     }
     .section {
@@ -144,6 +147,7 @@
       background: white;
       border: 1px solid #e0e0e0;
       border-radius: 4px;
+      min-height: 0;             /* permite encolher */
     }
     .section h3 {
       padding: 0.5rem;
@@ -157,7 +161,7 @@
       font: 14px monospace;
       background: #1e1e1e;
       color: #00ff00;
-      overflow: auto;
+      overflow: auto;            /* scroll interno */
       white-space: pre-wrap;
       border-bottom-left-radius: 4px;
       border-bottom-right-radius: 4px;
@@ -180,11 +184,16 @@
 
     <div class="controls">
       <div class="file-upload btn">
-        Selecionar Arquivo
+        📁 Selecionar Arquivo
         <input type="file" id="file-input" accept=".txt,.opus" />
       </div>
       <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
-      <button id="btn-run" class="btn">Executar Código</button>
+      <button id="btn-run" class="btn">▶ Executar Código</button>
+    </div>
+
+    <div class="preview">
+      <h4>Preview com Highlight</h4>
+      <pre><code id="highlighted-code" class="language-lexe"></code></pre>
     </div>
   </div>
 
@@ -199,6 +208,19 @@
     </div>
   </div>
 
+  <!-- Prism.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script>
+    Prism.languages.lexe = {
+      'comment': /\/\/.*/g,
+      'keyword': /\b(agua|fogo|ferro|ouro|prata|chumbo|mercurio|alimentar|escreva)\b/g,
+      'type'   : /\b(animal|void|int)\b/g,
+      'number' : /\b\d+\b/g,
+      'operator': /[=+\-*\/]/g,
+      'punctuation': /[;:{}()]/g,
+    };
+  </script>
+
   <script>
     const codeInput    = document.getElementById('code-input');
     const lineNumbers  = document.getElementById('line-numbers');
@@ -208,12 +230,12 @@
     const consoleOut   = document.getElementById('console-output');
     const treeOut      = document.getElementById('tree-output');
     const notification = document.getElementById('notification');
+    const highlighted  = document.getElementById('highlighted-code');
 
     function updateLineNumbers() {
       const count = codeInput.value.split('\n').length;
-      lineNumbers.textContent = Array.from({length: count}, (_, i) => i + 1).join('\n');
+      lineNumbers.textContent = Array.from({ length: count }, (_, i) => i + 1).join('\n');
     }
-
     function showNotification(text) {
       document.getElementById('notification-text').textContent = text;
       notification.classList.add('show');
@@ -223,7 +245,11 @@
       }, 3000);
     }
 
-    codeInput.addEventListener('input', updateLineNumbers);
+    codeInput.addEventListener('input', () => {
+      updateLineNumbers();
+      highlighted.textContent = codeInput.value;
+      Prism.highlightElement(highlighted);
+    });
     codeInput.addEventListener('scroll', () => {
       lineNumbers.scrollTop = codeInput.scrollTop;
     });
@@ -237,6 +263,8 @@
         reader.onload = e => {
           codeInput.value = e.target.result;
           updateLineNumbers();
+          highlighted.textContent = e.target.result;
+          Prism.highlightElement(highlighted);
           showNotification('Código carregado com sucesso!');
         };
         reader.readAsText(file);
@@ -272,9 +300,7 @@
         sendCode(codeInput.value + '\n');
       }
     }
-
     btnRun.addEventListener('click', runCProgram);
   </script>
-
 </body>
 </html>

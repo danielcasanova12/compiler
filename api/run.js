@@ -1,8 +1,8 @@
 // api/run.js
-import { spawn } from 'child_process';
-import path from 'path';
+const { spawn } = require('child_process');
+const path = require('path');
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ stderr: 'Method Not Allowed' });
   }
@@ -12,7 +12,10 @@ export default function handler(req, res) {
   let stderr = '';
 
   // executa o seu parser/opus
-  const child = spawn('node', [path.join(process.cwd(), 'opus.js')]);
+  // opus.js fica na raiz do projeto
+  // em serverless bundles da Vercel o path relativo precisa subir um nível
+  const opusPath = path.join(__dirname, '..', 'opus.js');
+  const child = spawn('node', [opusPath]);
 
   child.stdout.on('data', data => { stdout += data.toString(); });
   child.stderr.on('data', data => { stderr += data.toString(); });

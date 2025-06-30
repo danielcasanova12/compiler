@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Compiler Interface com Highlight</title>
+  <title>Compiler Interface com Highlight e Exemplos</title>
 
   <!-- Prism.css para tema escuro -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f5f7fa;
@@ -19,192 +18,171 @@
       flex-direction: column;
       height: 100vh;
     }
-
+    /* Navegação */
+    .tabs {
+      display: flex;
+      background: #282c34;
+    }
+    .tab {
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 2px solid transparent;
+      transition: background 0.2s;
+    }
+    .tab:hover { background: rgba(255,255,255,0.1); }
+    .tab.active {
+      border-bottom: 2px solid #61dafb;
+      background: rgba(255,255,255,0.1);
+    }
+    .content {
+      flex: 1;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+    }
+    .content.active { display: flex; }
     /* --- EDIÇÃO + PREVIEW --- */
     .input-section {
       position: relative;
       background: white;
       padding: 1rem;
       border-bottom: 1px solid #e0e0e0;
-
-      /* ↙ limita e torna rolável ↘ */
       max-height: 45vh;
       overflow-y: auto;
     }
     .input-section h3 {
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-      color: #444;
+      font-size: 1.2rem; margin-bottom: 0.5rem; color: #444;
     }
-
     .notification {
-      position: absolute;
-      top: 1rem; right: 1rem;
+      position: absolute; top: 1rem; right: 1rem;
       display: flex; align-items: center;
       background: #d4edda; color: #155724;
       border: 1px solid #c3e6cb;
-      padding: 0.5rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      padding: 0.5rem 0.75rem; border-radius: 4px;
+      font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      opacity: 0; transition: opacity 0.3s ease;
       pointer-events: none;
     }
     .notification.show { opacity: 1; }
     .notification .icon { margin-right: 0.5rem; font-weight: bold; }
-
     .code-editor-container {
       display: flex;
       border: 1px solid #3e4451;
       background: #282c34;
       height: 200px;
     }
-    #line-numbers {
-      width: 40px;
-      padding: 10px 5px;
-      text-align: right;
-      background: #21252b;
-      color: #636d83;
-      font: 14px monospace;
-      line-height: 20px;
-      overflow-y: auto;
-      white-space: pre;
-      user-select: none;
+    #line-numbers { width: 40px; padding: 10px 5px; text-align: right;
+      background: #21252b; color: #636d83; font: 14px monospace;
+      line-height: 20px; overflow-y: auto; white-space: pre; user-select: none;
     }
-    #code-input {
-      flex: 1;
-      border: none; outline: none;
-      background: #282c34; color: #abb2bf;
-      padding: 10px; font: 14px monospace;
-      line-height: 20px;
-      white-space: pre;
-      overflow: auto; resize: none;
+    #code-input { flex: 1; border: none; outline: none;
+      background: #282c34; color: #abb2bf; padding: 10px;
+      font: 14px monospace; line-height: 20px;
+      white-space: pre; overflow: auto; resize: none;
     }
-
-    .controls {
-      margin-top: 0.75rem;
-      display: flex; align-items: center; gap: 0.75rem;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
+    .controls { margin-top: 0.75rem; display: flex; align-items: center; gap: 0.75rem; }
+    .btn { display: inline-flex; align-items: center; justify-content: center;
+      background: #007bff; color: #fff; border: none; padding: 0.5rem 1rem;
+      border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s ease;
     }
     .btn:hover { background: #0056b3; }
-
-    .file-upload {
-      position: relative;
-      overflow: hidden;
+    .file-upload { position: relative; overflow: hidden; }
+    .file-upload input[type="file"] { position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; opacity: 0; cursor: pointer;
     }
-    .file-upload input[type="file"] {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .file-name {
-      font-size: 0.9rem;
-      color: #555;
-      font-style: italic;
-    }
-
-    .preview {
-      margin-top: 1rem;
-    }
-    .preview h4 {
-      margin-bottom: 0.5rem;
-      color: #444;
-    }
-    .preview pre {
-      border-radius: 4px;
-      overflow: auto;
-      padding: 1rem;
-      background: #282c34;
-    }
-
+    .file-name { font-size: 0.9rem; color: #555; font-style: italic; }
+    .preview { margin-top: 1rem; }
+    .preview h4 { margin-bottom: 0.5rem; color: #444; }
+    .preview pre { border-radius: 4px; overflow: auto; padding: 1rem; background: #282c34; }
     /* --- SAÍDA (CONSOLE + ÁRVORE) --- */
-    .main-container {
-      flex: 1;                   /* ocupa resto da tela */
-      display: flex;
-      min-height: 0;             /* permite encolher */
-      overflow: hidden;
+    .main-container { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+    .section { flex: 1; margin: 0.5rem; display: flex; flex-direction: column;
+      background: white; border: 1px solid #e0e0e0; border-radius: 4px; min-height: 0;
     }
-    .section {
-      flex: 1;
-      margin: 0.5rem;
-      display: flex;
-      flex-direction: column;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      min-height: 0;             /* permite encolher */
+    .section h3 { padding: 0.5rem; border-bottom: 1px solid #e0e0e0;
+      font-size: 1rem; color: #444;
     }
-    .section h3 {
-      padding: 0.5rem;
-      border-bottom: 1px solid #e0e0e0;
-      font-size: 1rem;
-      color: #444;
-    }
-    .content-area {
-      flex: 1;
-      padding: 0.75rem;
-      font: 14px monospace;
-      background: #1e1e1e;
-      color: #00ff00;
-      overflow: auto;            /* scroll interno */
-      white-space: pre-wrap;
-      border-bottom-left-radius: 4px;
+    .content-area { flex: 1; padding: 0.75rem; font: 14px monospace;
+      background: #1e1e1e; color: #00ff00; overflow: auto;
+      white-space: pre-wrap; border-bottom-left-radius: 4px;
       border-bottom-right-radius: 4px;
+    }
+    /* --- EXEMPLOS --- */
+    .examples { padding: 1rem; overflow-y: auto; }
+    .example-block { margin-bottom: 1.5rem; }
+    .example-block h4 { margin-bottom: 0.5rem; color: #222; }
+    .example-block pre { background: #1e1e1e; color: #f8f8f2;
+      padding: 1rem; border-radius: 4px; overflow: auto;
     }
   </style>
 </head>
 <body>
+  <div class="tabs">
+    <div class="tab active" data-tab="editor">Editor</div>
+    <div class="tab" data-tab="exemplos">Exemplos</div>
+  </div>
 
-  <div class="input-section">
-    <h3>Seu Código Opus</h3>
-    <div class="notification" id="notification">
-      <span class="icon">✔</span>
-      <span id="notification-text">Código carregado com sucesso!</span>
-    </div>
-
-    <div class="code-editor-container">
-      <div id="line-numbers"></div>
-      <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
-    </div>
-
-    <div class="controls">
-      <div class="file-upload btn">
-        📁 Selecionar Arquivo
-        <input type="file" id="file-input" accept=".txt,.opus" />
+  <!-- Conteúdo Editor -->
+  <div id="editor" class="content active">
+    <div class="input-section">
+      <h3>Seu Código Opus</h3>
+      <div class="notification" id="notification">
+        <span class="icon">✔</span>
+        <span id="notification-text">Código carregado com sucesso!</span>
       </div>
-      <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
-      <button id="btn-run" class="btn">▶ Executar Código</button>
+      <div class="code-editor-container">
+        <div id="line-numbers"></div>
+        <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
+      </div>
+      <div class="controls">
+        <div class="file-upload btn">
+          📁 Selecionar Arquivo
+          <input type="file" id="file-input" accept=".txt,.opus" />
+        </div>
+        <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
+        <button id="btn-run" class="btn">▶ Executar Código</button>
+      </div>
+      <div class="preview">
+        <h4>Preview com Highlight</h4>
+        <pre><code id="highlighted-code" class="language-lexe"></code></pre>
+      </div>
     </div>
-
-    <div class="preview">
-      <h4>Preview com Highlight</h4>
-      <pre><code id="highlighted-code" class="language-lexe"></code></pre>
+    <div class="main-container">
+      <div class="section">
+        <h3>Console (stderr)</h3>
+        <pre id="console-output" class="content-area"></pre>
+      </div>
+      <div class="section">
+        <h3>Árvore (stdout)</h3>
+        <pre id="tree-output" class="content-area"></pre>
+      </div>
     </div>
   </div>
 
-  <div class="main-container">
-    <div class="section">
-      <h3>Console (stderr)</h3>
-      <pre id="console-output" class="content-area"></pre>
-    </div>
-    <div class="section">
-      <h3>Árvore (stdout)</h3>
-      <pre id="tree-output" class="content-area"></pre>
+  <!-- Conteúdo Exemplos -->
+  <div id="exemplos" class="content">
+    <div class="examples">
+      <div class="example-block">
+        <h4>Exemplo em C</h4>
+        <pre><code class="language-c">#include <stdio.h>
+
+int main() {
+  printf("Olá, Mundo!\n");
+  return 0;
+}</code></pre>
+        <button class="btn use-example">Usar este</button>
+      </div>
+      <div class="example-block">
+        <h4>Exemplo em Opus</h4>
+        <pre><code class="language-lexe">// Exemplo simples em Opus
+alimentar x = 42;
+escreva(x);</code></pre>
+        <button class="btn use-example">Usar este</button>
+      </div>
     </div>
   </div>
 
@@ -212,7 +190,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script>
     Prism.languages.lexe = {
-      'comment': /\/\/.*/g,
+      'comment': /\/\/.*$/gm,
       'keyword': /\b(agua|fogo|ferro|ouro|prata|chumbo|mercurio|alimentar|escreva)\b/g,
       'type'   : /\b(animal|void|int)\b/g,
       'number' : /\b\d+\b/g,
@@ -220,8 +198,17 @@
       'punctuation': /[;:{}()]/g,
     };
   </script>
-
   <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+    // Editor logic
     const codeInput    = document.getElementById('code-input');
     const lineNumbers  = document.getElementById('line-numbers');
     const fileInput    = document.getElementById('file-input');
@@ -245,7 +232,6 @@
         notification.classList.remove('show');
       }, 3000);
     }
-
     codeInput.addEventListener('input', () => {
       updateLineNumbers();
       highlighted.textContent = codeInput.value;
@@ -255,7 +241,6 @@
       lineNumbers.scrollTop = codeInput.scrollTop;
     });
     document.addEventListener('DOMContentLoaded', updateLineNumbers);
-
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length) {
         const file = fileInput.files[0];
@@ -273,7 +258,21 @@
         fileNameEl.textContent = 'Nenhum arquivo selecionado';
       }
     });
-
+    // Use example button
+    document.querySelectorAll('.use-example').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.previousElementSibling.querySelector('code').textContent;
+        // switch to editor tab
+        document.querySelector('[data-tab="editor"]').click();
+        fileInput.value = null;
+        fileNameEl.textContent = 'Nenhum arquivo selecionado';
+        codeInput.value = code;
+        updateLineNumbers();
+        highlighted.textContent = code;
+        Prism.highlightElement(highlighted);
+        showNotification('Exemplo carregado no editor!');
+      });
+    });
     function sendCode(src) {
       fetch(RUN_ENDPOINT, {
         method: 'POST',
@@ -289,7 +288,6 @@
         consoleOut.textContent += '[Erro] ' + err.message + '\n';
       });
     }
-
     function runCProgram() {
       consoleOut.textContent = '';
       treeOut.textContent   = '';

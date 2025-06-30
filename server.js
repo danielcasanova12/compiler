@@ -66,11 +66,7 @@ function runCode(code, callback) {
 }
 
 http.createServer((req, res) => {
-<<<<<<< HEAD
   if (req.method === 'POST' && (req.url === '/run' || req.url === '/api/run')) {
-=======
-   if (req.method === 'POST' && (req.url === '/run' || req.url === '/api/run')) {
->>>>>>> origin/main
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', () => {

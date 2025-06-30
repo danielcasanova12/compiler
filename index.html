@@ -275,11 +275,7 @@
     });
 
     function sendCode(src) {
-<<<<<<< HEAD
       fetch(RUN_ENDPOINT, {
-=======
-      fetch('/RUN_ENDPOINT', {
->>>>>>> origin/main
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: src })

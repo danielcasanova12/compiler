@@ -1,0 +1,37 @@
+mercurio a : array(int, 5, 6)
+ouro animal {
+    chumbo faz_barulho () : void
+}
+prata cachorro : animal {
+    mercurio idade : int
+    chumbo faz_barulho () : void {
+        escreva('auau')
+    }
+}
+# exemplo de comentario
+prata gato : animal {
+    mercurio idade : int
+    chumbo faz_barulho () : void {
+        escreva('miau')
+    }
+}
+chumbo alimentar_animal(a : *animal) : void {
+    escreva('ta com fome?');
+    animal.faz_barulho()
+}
+
+mercurio b : animal, c: cachorro, d: a
+
+chumbo programa () : void {
+    mercurio escolha = 1;
+    ;
+    agua escolha == 1 {
+        mercurio g : gato;
+        alimentar_animal(&g.x);
+    }
+    fogo {
+        mercurio c : cachorro;
+        alimentar_animal(&c);
+    }
+    ferro a(2) + a(3) * a(4)
+}

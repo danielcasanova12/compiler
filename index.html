@@ -136,11 +136,11 @@
       </div>
       <div class="code-editor-container">
         <div id="line-numbers"></div>
-        <textarea id="code-input" placeholder="Cole seu código C aqui…"></textarea>
+        <textarea id="code-input" placeholder="Cole seu código Opus aqui…"></textarea>
       </div>
       <div class="controls">
         <div class="file-upload btn">
-          📁 Selecionar Arquivo
+           Selecionar Arquivo
           <input type="file" id="file-input" accept=".txt,.opus" />
         </div>
         <span id="file-name" class="file-name">Nenhum arquivo selecionado</span>
@@ -167,20 +167,63 @@
   <div id="exemplos" class="content">
     <div class="examples">
       <div class="example-block">
-        <h4>Exemplo em C</h4>
-        <pre><code class="language-c">#include <stdio.h>
-
-int main() {
-  printf("Olá, Mundo!\n");
-  return 0;
-}</code></pre>
+        <h4>Erros de Redeclaração</h4>
+        <pre><code class="language-lexe"># erros de redeclaracao de entidades
+mercurio a
+chumbo b () : void {}
+prata a {}
+mercurio b</code></pre>
         <button class="btn use-example">Usar este</button>
       </div>
       <div class="example-block">
-        <h4>Exemplo em Opus</h4>
-        <pre><code class="language-lexe">// Exemplo simples em Opus
-alimentar x = 42;
-escreva(x);</code></pre>
+        <h4>Interface e Ponteiro</h4>
+        <pre><code class="language-lexe">ouro x {}
+# erro de variavel com tipo interface
+mercurio a : x 
+# deve se usar um ponteiro
+mercurio b : *x</code></pre>
+        <button class="btn use-example">Usar este</button>
+      </div>
+      <div class="example-block">
+        <h4>OO e Funções</h4>
+        <pre><code class="language-lexe">mercurio a : array(int, 5, 6)
+
+oùro animal {
+    chumbo faz_barulho () : void
+}
+
+prata cachorro : animal {
+    mercurio idade : int
+    chumbo faz_barulho () : void {
+        escreva('auau')
+    }
+}
+
+
+prata gato : animal {
+    mercurio idade : int
+    chumbo faz_barulho () : void {
+        escreva('miau')
+    }
+}
+
+chumbo alimentar_animal(a : *animal) : void {
+    escreva('ta com fome?');
+    animal.faz_barulho()
+}
+
+chumbo programa () : void {
+    mercurio escolha = 1;
+    agua escolha == 1 {
+        mercurio g : gato;
+        alimentar_animal(&g);
+    }
+    fogo {
+        mercurio c : cachorro;
+        alimentar_animal(&c);
+    }
+    ferro a(2) + a(3) * a(4)
+}</code></pre>
         <button class="btn use-example">Usar este</button>
       </div>
     </div>
@@ -191,11 +234,11 @@ escreva(x);</code></pre>
   <script>
     Prism.languages.lexe = {
       'comment': /\/\/.*$/gm,
-      'keyword': /\b(agua|fogo|ferro|ouro|prata|chumbo|mercurio|alimentar|escreva)\b/g,
+      'keyword': /\b(agua|fogo|ferro|ouro|prata|chumbo|mercurio|alimentar|escreva|array)\b/g,
       'type'   : /\b(animal|void|int)\b/g,
       'number' : /\b\d+\b/g,
       'operator': /[=+\-*\/]/g,
-      'punctuation': /[;:{}()]/g,
+      'punctuation': /[;:{}()\[\]]/g,
     };
   </script>
   <script>
